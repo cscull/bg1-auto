@@ -25,6 +25,7 @@ import kvdb from '@/kvdb';
 
 import RebookingHeader from '../../RebookingHeader';
 import { HomeTabProps } from '../Home';
+import AutoRefreshButton from '../AutoRefreshButton';
 import RefreshButton from '../RefreshButton';
 import BookingDateSelect from './BookingDateSelect';
 import LLButton from './LLButton';
@@ -80,6 +81,10 @@ export default function MultiPassList({ ref }: HomeTabProps) {
           <SortSelect />
           <ParkSelect />
           <RefreshButton name="Experiences" onClick={refreshExperiences} />
+          <AutoRefreshButton
+            name="Experiences"
+            onClick={refreshExperiences}
+          />
         </>
       }
       subhead={

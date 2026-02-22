@@ -12,6 +12,7 @@ import ExperiencesContext from '@/contexts/ExperiencesContext';
 import NavContext from '@/contexts/NavContext';
 import ThemeContext from '@/contexts/ThemeContext';
 
+import AutoRefreshButton from '../AutoRefreshButton';
 import DasPartyList from '../DasPartyList';
 import { HomeTabProps } from '../Home';
 import RefreshButton from '../RefreshButton';
@@ -39,6 +40,7 @@ export default function TimesGuide({ ref }: HomeTabProps) {
           )}
           <ParkSelect />
           <RefreshButton name="Times" onClick={refreshExperiences} />
+          <AutoRefreshButton name="Times" onClick={refreshExperiences} />
         </>
       }
       ref={ref}

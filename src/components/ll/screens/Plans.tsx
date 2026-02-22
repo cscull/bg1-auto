@@ -11,6 +11,7 @@ import { parkDate } from '@/datetime';
 import { ScreenProps } from '../../Screen';
 import BookingListing from '../BookingListing';
 import NoPlans from '../NoPlans';
+import AutoRefreshButton from './AutoRefreshButton';
 import RefreshButton from './RefreshButton';
 
 export default function Plans(props: Partial<ScreenProps>) {
@@ -19,7 +20,12 @@ export default function Plans(props: Partial<ScreenProps>) {
   return (
     <Tab
       title="Your Plans"
-      buttons={<RefreshButton name="Plans" onClick={refreshPlans} />}
+      buttons={
+        <>
+          <RefreshButton name="Plans" onClick={refreshPlans} />
+          <AutoRefreshButton name="Plans" onClick={refreshPlans} />
+        </>
+      }
       theme={DEFAULT_THEME}
       {...props}
     >

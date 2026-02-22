@@ -67,7 +67,7 @@ export default function App() {
           if (!(error instanceof InvalidOrigin)) throw error;
         }
       }
-      navigate('https://joelface.github.io/bg1/start.html');
+      navigate('https://cscull.github.io/bg1-auto/start.html');
     })();
   }, []);
 

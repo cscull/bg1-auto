@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BG1 Auto-Refresh Fork</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.1rem; margin: 1.2rem 0 0.5rem; color: #1a5276; }
+    p, li { font-size: 0.95rem; line-height: 1.5; }
+    ul { padding-left: 1.2rem; margin-bottom: 0.8rem; }
+    a { color: #2980b9; }
+    .bookmarklet-box {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0.8rem;
+      margin: 0.8rem 0;
+      word-break: break-all;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 0.8rem;
+      color: #555;
+      user-select: all;
+      -webkit-user-select: all;
+    }
+    .links {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin: 0.8rem 0;
+    }
+    .links a {
+      display: block;
+      background: #2980b9;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.6rem;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .links a:active { background: #1a5276; }
+    .note {
+      background: #fef9e7;
+      border: 1px solid #f9e79f;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-size: 0.85rem;
+      margin: 0.8rem 0;
+    }
+    ol { padding-left: 1.4rem; }
+    ol li { margin-bottom: 0.4rem; }
+  </style>
+</head>
+<body>
+  <h1>BG1 Auto-Refresh Fork</h1>
+  <p>This is a fork of <a href="https://github.com/joelface/bg1">joelface/bg1</a> with auto-refresh modifications.</p>
+
+  <h2>Bookmarklet Code</h2>
+  <p>Copy the code below and save it as a bookmark:</p>
+  <div class="bookmarklet-box" id="bm-code"></div>
+
+  <h2>Setup Instructions</h2>
+  <h3 style="font-size:0.95rem; margin:0.6rem 0 0.3rem;">Safari (iPhone)</h3>
+  <ol>
+    <li>Bookmark any page (e.g. this one)</li>
+    <li>Edit the bookmark &mdash; change the name to <strong>BG1</strong></li>
+    <li>Replace the URL with the bookmarklet code above</li>
+    <li>Navigate to a Disney page below, then open the bookmark</li>
+  </ol>
+
+  <h3 style="font-size:0.95rem; margin:0.6rem 0 0.3rem;">Chrome (Android)</h3>
+  <ol>
+    <li>Copy the bookmarklet code above</li>
+    <li>Bookmark any page, name it <strong>BG1</strong></li>
+    <li>Edit the bookmark and paste the code as the URL</li>
+    <li>Navigate to a Disney page below, type <strong>BG1</strong> in the address bar, and tap the bookmark suggestion</li>
+  </ol>
+
+  <h2>Disney Pages</h2>
+  <p>Navigate to one of these pages, then run the bookmarklet:</p>
+  <div class="links">
+    <a href="https://disneyworld.disney.go.com/vas/">WDW LL</a>
+    <a href="https://disneyland.disney.go.com/vas/">DLR LL</a>
+    <a href="https://vqguest-svc-wdw.wdprapps.disney.com/application/v1/guest/getQueues">WDW VQ</a>
+    <a href="https://vqguest-svc.wdprapps.disney.com/application/v1/guest/getQueues">DLR VQ</a>
+  </div>
+
+  <div class="note">
+    <strong>Note:</strong> You will see an error page after navigating to a Disney link above. This is normal. Run the BG1 bookmarklet to load the interface.
+  </div>
+
+  <script>
+    var u='https://cscull.github.io/bg1-auto/';
+    var bmCode = "javascript:void(function(){var u='" + u + "';if(document.getElementById('bg1')){location.reload()}else{var s=document.createElement('script');s.id='bg1';s.src=u+'bg1.js';document.head.appendChild(s);var l=document.createElement('link');l.rel='stylesheet';l.href=u+'bg1.css';document.head.appendChild(l)}})()";
+    document.getElementById('bm-code').textContent = bmCode;
+  </script>
+</body>
+</html>

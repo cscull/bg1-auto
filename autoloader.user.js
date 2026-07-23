@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         BG1 Autoloader
-// @namespace    https://joelface.github.io/bg1/
+// @namespace    https://cscull.github.io/bg1-auto/
 // @version      0.3
 // @description  Automatically loads the BG1 interface
 // @author       Joel Bruick
-// @match        https://joelface.github.io/bg1/start.html
+// @match        https://cscull.github.io/bg1-auto/start.html
 // @match        https://disneyworld.disney.go.com/vas/
 // @match        https://disneyworld.disney.go.com/*/vas/
 // @match        https://disneyland.disney.go.com/vas/
@@ -15,7 +15,7 @@
 // ==/UserScript==
 'use strict';
 
-const bg1Url = 'https://joelface.github.io/bg1/';
+const bg1Url = 'https://cscull.github.io/bg1-auto/';
 if (window.location.href === bg1Url + 'start.html') {
   document.body.classList.add('autoload');
 } else {

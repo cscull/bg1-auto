@@ -54,6 +54,14 @@ export const STARRED_KEY = 'bg1.genie.tipBoard.starred';
 const LIGHTNING_PICK = 'Lightning Pick';
 const BOOKED = 'Booked';
 
+function formatCheckedAt(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
 export interface ExtFlexExp extends FlexExperience {
   booked: boolean;
   lp: boolean;
@@ -375,17 +383,46 @@ const Experiences = memo(function Experiences({
     <>
       {watcher.state?.status === 'watching' && (
         <Alert title="Lightning Lane watcher">
-          <div className="flex flex-wrap items-center gap-2 py-2">
-            <span className="flex-1">
+          <div className="py-2">
+            <p className="mt-0">
               Watching <b>{watcher.state.watch.experienceName}</b> for a return
               time from <Time time={watcher.state.watch.start} /> to{' '}
-              <Time time={watcher.state.watch.end} />. Refreshing every{' '}
+              <Time time={watcher.state.watch.end} />.
+            </p>
+            <div
+              aria-live="polite"
+              className="mt-2 rounded-sm border border-yellow-500 bg-white/70 p-2"
+            >
+              <div className="text-xs font-semibold uppercase">
+                Latest offered return time
+              </div>
+              <div className="text-xl font-bold">
+                {watcher.state.lastObservedTime ? (
+                  <Time time={watcher.state.lastObservedTime} />
+                ) : (
+                  'Unavailable'
+                )}
+              </div>
+              <div className="mt-1 text-xs">
+                Check #{watcher.state.checkCount} at{' '}
+                {formatCheckedAt(watcher.state.lastCheckedAt)}. Next automatic
+                check at {formatCheckedAt(watcher.state.nextRefreshAt)}.
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button type="small" onClick={watcher.refreshNow}>
+                Refresh now
+              </Button>
+              <Button type="small" onClick={watcher.stop}>
+                Stop watching
+              </Button>
+            </div>
+            <p className="mb-0 mt-2 text-xs">
+              Automatic checks run every{' '}
               {LIGHTNING_LANE_WATCH_INTERVAL_MS / 1000} seconds while this
-              screen is open.
-            </span>
-            <Button type="small" onClick={watcher.stop}>
-              Stop watching
-            </Button>
+              screen is open. Refresh now is always available for a manual
+              check.
+            </p>
           </div>
         </Alert>
       )}
@@ -398,10 +435,18 @@ const Experiences = memo(function Experiences({
             {watcher.state.watch.experienceName} is available at{' '}
             <Time time={watcher.state.returnTime} />
           </div>
-          <p className="mt-1 text-sm">Auto-refresh has stopped.</p>
-          <Button type="small" onClick={watcher.stop}>
-            Dismiss
-          </Button>
+          <p className="mt-1 text-sm">
+            Automatic refresh has stopped. Accepting only closes the watcher so
+            you can act manually; it does not book the Lightning Lane.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="small" onClick={watcher.stop}>
+              Accept &amp; stop
+            </Button>
+            <Button type="small" onClick={watcher.continueWatching}>
+              Reject &amp; keep watching
+            </Button>
+          </div>
         </div>
       )}
       <ExperienceList experiences={unexperienced} type="unexperienced" />

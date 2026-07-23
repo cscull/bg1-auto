@@ -3,6 +3,8 @@ import { memo, use, useEffect, useRef, useState } from 'react';
 import { isLLMP } from '@/api/itinerary';
 import { Experience, FlexExperience } from '@/api/ll';
 import { Park } from '@/api/resort';
+import Alert from '@/components/Alert';
+import Button from '@/components/Button';
 import Screen from '@/components/Screen';
 import Tab from '@/components/Tab';
 import { Time } from '@/components/Time';
@@ -14,8 +16,18 @@ import ParkContext from '@/contexts/ParkContext';
 import PlansContext from '@/contexts/PlansContext';
 import ResortContext from '@/contexts/ResortContext';
 import ThemeContext from '@/contexts/ThemeContext';
-import { DateTime, parkDate, upcomingTimes } from '@/datetime';
+import {
+  DateTime,
+  ParkTime,
+  formatTime,
+  parkDate,
+  upcomingTimes,
+} from '@/datetime';
+import useLightningLaneWatcher, {
+  LIGHTNING_LANE_WATCH_INTERVAL_MS,
+} from '@/hooks/useLightningLaneWatcher';
 import useSavedParty from '@/hooks/useSavedParty';
+import useScreenState from '@/hooks/useScreenState';
 import CheckmarkIcon from '@/icons/CheckmarkIcon';
 import DropIcon from '@/icons/DropIcon';
 import { IconProps } from '@/icons/Icon';
@@ -112,7 +124,14 @@ const Experiences = memo(function Experiences({
   const theme = use(ThemeContext);
   const resort = use(ResortContext);
   const { plans } = use(PlansContext);
+  const { refreshExperiences } = use(ExperiencesContext);
   const { bookingDate } = use(BookingDateContext);
+  const { isActiveScreen } = useScreenState();
+  const [watchDraft, setWatchDraft] = useState<{
+    experience: ExtFlexExp;
+    start: string;
+    end: string;
+  }>();
   const [starred, setStarred] = useState<Set<string>>(() => {
     const ids = kvdb.get<string[]>(STARRED_KEY) ?? [];
     return new Set(Array.isArray(ids) ? ids : []);
@@ -123,6 +142,28 @@ const Experiences = memo(function Experiences({
     ? upcomingTimes(park.dropTimes)[0]
     : park.dropTimes[0];
   const now = +DateTime.now().time;
+  const watcher = useLightningLaneWatcher({
+    enabled: isActiveScreen,
+    experiences,
+    refreshExperiences,
+    scopeKey: `${park.id}:${bookingDate}`,
+  });
+
+  useEffect(() => {
+    if (watcher.state?.status !== 'matched') return;
+    const { experienceId, experienceName } = watcher.state.watch;
+    const { returnTime } = watcher.state;
+    document
+      .getElementById(`ll-experience-${experienceId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    navigator.vibrate?.([200, 100, 200]);
+    const alertId = setTimeout(() => {
+      alert(
+        `${experienceName} has a Lightning Lane return time of ${formatTime(returnTime)}. Auto-refresh has stopped.`
+      );
+    });
+    return () => clearTimeout(alertId);
+  }, [watcher.state]);
 
   useEffect(() => {
     kvdb.set<string[]>(STARRED_KEY, [...starred]);
@@ -151,6 +192,26 @@ const Experiences = memo(function Experiences({
     );
   const showBookedDesc = () => goTo(<BookedDesc />);
 
+  function editWatch(experience: ExtFlexExp) {
+    const start = experience.flex.nextAvailableTime ?? new ParkTime(9);
+    setWatchDraft({
+      experience,
+      start: start.toString().slice(0, 5),
+      end: start.add({ hours: 1 }).toString().slice(0, 5),
+    });
+  }
+
+  function startWatch() {
+    if (!watchDraft) return;
+    watcher.start({
+      experienceId: watchDraft.experience.id,
+      experienceName: watchDraft.experience.name,
+      start: ParkTime.from(watchDraft.start),
+      end: ParkTime.from(watchDraft.end),
+    });
+    setWatchDraft(undefined);
+  }
+
   const LLButtonOrTime = ll.rules.book ? LLButton : LLTime;
 
   const ExperienceList = ({
@@ -166,7 +227,16 @@ const Experiences = memo(function Experiences({
           ? upcomingTimes(exp.dropTimes ?? [])[0]
           : exp.dropTimes?.[0];
         return (
-          <li key={exp.id + (exp.starred ? '*' : '')}>
+          <li
+            id={`ll-experience-${exp.id}`}
+            key={exp.id + (exp.starred ? '*' : '')}
+            className={
+              watcher.state?.status === 'matched' &&
+              watcher.state.watch.experienceId === exp.id
+                ? 'bg-green-100'
+                : undefined
+            }
+          >
             <div className="flex items-center gap-x-2">
               <StarButton experience={exp} toggleStar={toggleStar} />
               <h3 className="flex-1 mt-0 text-lg font-semibold leading-tight truncate">
@@ -207,7 +277,61 @@ const Experiences = memo(function Experiences({
               <LabeledItem label="LL">
                 <LLButtonOrTime experience={exp} />
               </LabeledItem>
+              <Button type="small" onClick={() => editWatch(exp)}>
+                {watcher.state?.status === 'watching' &&
+                watcher.state.watch.experienceId === exp.id
+                  ? 'Watching'
+                  : 'Watch'}
+              </Button>
             </div>
+            {watchDraft?.experience.id === exp.id && (
+              <div className="mt-3 rounded-sm border border-gray-300 bg-gray-100 p-2">
+                <div className="font-semibold">Watch {exp.name}</div>
+                <p className="mt-1 text-sm">
+                  Refresh every {LIGHTNING_LANE_WATCH_INTERVAL_MS / 1000}{' '}
+                  seconds while this screen is open. Stop as soon as the return
+                  time enters this range.
+                </p>
+                <div className="mt-2 flex flex-wrap items-end gap-2">
+                  <label className="text-sm font-semibold">
+                    From
+                    <input
+                      aria-label="Desired return time from"
+                      type="time"
+                      value={watchDraft.start}
+                      onChange={event =>
+                        setWatchDraft(draft =>
+                          draft
+                            ? { ...draft, start: event.target.value }
+                            : draft
+                        )
+                      }
+                      className="ml-1 rounded-sm border border-gray-400 bg-white p-1"
+                    />
+                  </label>
+                  <label className="text-sm font-semibold">
+                    To
+                    <input
+                      aria-label="Desired return time to"
+                      type="time"
+                      value={watchDraft.end}
+                      onChange={event =>
+                        setWatchDraft(draft =>
+                          draft ? { ...draft, end: event.target.value } : draft
+                        )
+                      }
+                      className="ml-1 rounded-sm border border-gray-400 bg-white p-1"
+                    />
+                  </label>
+                  <Button type="small" onClick={startWatch}>
+                    Start watching
+                  </Button>
+                  <Button type="small" onClick={() => setWatchDraft(undefined)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </li>
         );
       })}
@@ -249,6 +373,37 @@ const Experiences = memo(function Experiences({
 
   return (
     <>
+      {watcher.state?.status === 'watching' && (
+        <Alert title="Lightning Lane watcher">
+          <div className="flex flex-wrap items-center gap-2 py-2">
+            <span className="flex-1">
+              Watching <b>{watcher.state.watch.experienceName}</b> for a return
+              time from <Time time={watcher.state.watch.start} /> to{' '}
+              <Time time={watcher.state.watch.end} />. Refreshing every{' '}
+              {LIGHTNING_LANE_WATCH_INTERVAL_MS / 1000} seconds while this
+              screen is open.
+            </span>
+            <Button type="small" onClick={watcher.stop}>
+              Stop watching
+            </Button>
+          </div>
+        </Alert>
+      )}
+      {watcher.state?.status === 'matched' && (
+        <div
+          role="alert"
+          className="mt-4 rounded-sm border-2 border-green-600 bg-green-100 p-2"
+        >
+          <div className="font-semibold text-green-900">
+            {watcher.state.watch.experienceName} is available at{' '}
+            <Time time={watcher.state.returnTime} />
+          </div>
+          <p className="mt-1 text-sm">Auto-refresh has stopped.</p>
+          <Button type="small" onClick={watcher.stop}>
+            Dismiss
+          </Button>
+        </div>
+      )}
       <ExperienceList experiences={unexperienced} type="unexperienced" />
       {experienced.length > 0 && (
         <>
